@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - TurtleQue</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+</head>
+<body style="display:flex;justify-content:center;align-items:center;height:100vh;background:black;">
+  <div class="window" style="width: 300px;">
+    <div class="window-header">
+      <span>Login</span>
+    </div>
+    <div class="window-content">
+      <form id="authForm">
+        <input type="email" id="email" placeholder="Email" required style="width:100%;margin-bottom:10px;">
+        <input type="password" id="password" placeholder="Password" required style="width:100%;margin-bottom:10px;">
+        <button type="submit" id="loginBtn">Login</button>
+        <button type="button" id="signupBtn">Sign Up</button>
+      </form>
+    </div>
+  </div>
+
+  <audio id="startupSound">
+    <source src="startup.mp3" type="audio/mpeg" />
+  </audio>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDbPW4QJXwz4zirD1eNni05Jv9jjvznBoc",
+      authDomain: "turtleque-d4096.firebaseapp.com",
+      projectId: "turtleque-d4096",
+      storageBucket: "turtleque-d4096.firebasestorage.app",
+      messagingSenderId: "1063279534551",
+      appId: "1:1063279534551:web:12ca5515dae9e447c02b92"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const startupSound = document.getElementById('startupSound');
+
+    // Play sound then redirect
+    function playSoundAndRedirect() {
+      startupSound.play().then(() => {
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 1000); // Wait 1 sec after sound
+      }).catch(() => {
+        // Fallback if sound blocked
+        window.location.href = "index.html";
+      });
+    }
+
+    // Login
+    loginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      auth.signInWithEmailAndPassword(email.value, password.value)
+        .then(playSoundAndRedirect)
+        .catch(err => alert(err.message));
+    });
+
+    // Sign Up
+    signupBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      auth.createUserWithEmailAndPassword(email.value, password.value)
+        .then(playSoundAndRedirect)
+        .catch(err => alert(err.message));
+    });
+  </script>
+</body>
+</html>
