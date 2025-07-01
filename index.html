@@ -18,13 +18,11 @@
     <button id="loginBtn">Login</button>
     <button id="signupBtn">Sign Up</button>
 
-    <!-- Manual test button for XP login sound -->
-    <button onclick="document.getElementById('loginSound').play()">Test XP Login Sound</button>
-
     <p id="message" style="color: red;"></p>
   </div>
 
-  <audio id="loginSound" src="xp-login.mp3" preload="auto"></audio>
+  <!-- Startup sound audio (hidden) -->
+  <audio id="startupSound" src="startup.mp3" preload="auto"></audio>
 
   <script>
     // Firebase config
@@ -45,48 +43,52 @@
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const message = document.getElementById('message');
-    const loginSound = document.getElementById('loginSound');
+    const startupSound = document.getElementById('startupSound');
 
-    function playSoundAndRedirect() {
-      loginSound.pause();
-      loginSound.currentTime = 0;
-
-      loginSound.play()
-        .then(() => {
-          setTimeout(() => {
-            window.location.href = "home.html";
-          }, loginSound.duration * 1000 || 1500);
-        })
-        .catch(err => {
-          console.log('Audio play error:', err);
-          setTimeout(() => {
-            window.location.href = "home.html";
-          }, 1500);
+    function playSoundAndThen(callback) {
+      startupSound.currentTime = 0;
+      const playPromise = startupSound.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          // After sound finishes, call callback
+          startupSound.onended = () => {
+            callback();
+          };
+        }).catch(() => {
+          // If can't play sound, just call callback immediately
+          callback();
         });
+      } else {
+        callback();
+      }
     }
 
     loginBtn.addEventListener('click', () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          playSoundAndRedirect();
-        })
-        .catch(err => {
-          message.textContent = err.message;
-        });
+      playSoundAndThen(() => {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        auth.signInWithEmailAndPassword(email, password)
+          .then(() => {
+            window.location.href = "home.html";
+          })
+          .catch(err => {
+            message.textContent = err.message;
+          });
+      });
     });
 
     signupBtn.addEventListener('click', () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          playSoundAndRedirect();
-        })
-        .catch(err => {
-          message.textContent = err.message;
-        });
+      playSoundAndThen(() => {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        auth.createUserWithEmailAndPassword(email, password)
+          .then(() => {
+            window.location.href = "home.html";
+          })
+          .catch(err => {
+            message.textContent = err.message;
+          });
+      });
     });
   </script>
 </body>
