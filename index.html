@@ -21,7 +21,7 @@
     <p id="message" style="color: red;"></p>
   </div>
 
-  <!-- 🔊 Windows XP login sound -->
+  <!-- 🔊 XP login sound -->
   <audio id="loginSound" src="xp-login.mp3" preload="auto"></audio>
 
   <script>
@@ -47,14 +47,16 @@
 
     function playSoundAndRedirect() {
       loginSound.play();
+      // Wait for sound to play, then redirect
       setTimeout(() => {
         window.location.href = "home.html";
-      }, 1500); // Adjust if your sound is longer
+      }, 1500);
     }
 
     loginBtn.addEventListener('click', () => {
       const email = emailInput.value;
       const password = passwordInput.value;
+
       auth.signInWithEmailAndPassword(email, password)
         .then(() => {
           playSoundAndRedirect();
@@ -67,6 +69,7 @@
     signupBtn.addEventListener('click', () => {
       const email = emailInput.value;
       const password = passwordInput.value;
+
       auth.createUserWithEmailAndPassword(email, password)
         .then(() => {
           playSoundAndRedirect();
