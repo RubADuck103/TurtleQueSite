@@ -45,50 +45,51 @@
     const message = document.getElementById('message');
     const startupSound = document.getElementById('startupSound');
 
-    // Play sound and redirect after it ends
-    function playSoundAndRedirect() {
+    function playSoundAndThen(callback) {
       startupSound.currentTime = 0;
       const playPromise = startupSound.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
+          // After sound finishes, call callback
           startupSound.onended = () => {
-            window.location.href = "home.html";
+            callback();
           };
         }).catch(() => {
-          // fallback redirect if sound fails
-          window.location.href = "home.html";
+          // If can't play sound, just call callback immediately
+          callback();
         });
       } else {
-        window.location.href = "home.html";
+        callback();
       }
     }
 
     loginBtn.addEventListener('click', () => {
-      message.textContent = ''; // Clear previous errors
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          playSoundAndRedirect();
-        })
-        .catch(err => {
-          message.textContent = err.message;
-        });
+      playSoundAndThen(() => {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        auth.signInWithEmailAndPassword(email, password)
+          .then(() => {
+            window.location.href = "home.html";
+          })
+          .catch(err => {
+            message.textContent = err.message;
+          });
+      });
     });
 
     signupBtn.addEventListener('click', () => {
-      message.textContent = ''; // Clear previous errors
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          playSoundAndRedirect();
-        })
-        .catch(err => {
-          message.textContent = err.message;
-        });
+      playSoundAndThen(() => {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        auth.createUserWithEmailAndPassword(email, password)
+          .then(() => {
+            window.location.href = "home.html";
+          })
+          .catch(err => {
+            message.textContent = err.message;
+          });
+      });
     });
   </script>
 </body>
 </html>
-
