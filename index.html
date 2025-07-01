@@ -21,11 +21,9 @@
     <p id="message" style="color: red;"></p>
   </div>
 
-  <!-- Startup sound audio (hidden) -->
   <audio id="startupSound" src="startup.mp3" preload="auto"></audio>
 
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDbPW4QJXwz4zirD1eNni05Jv9jjvznBoc",
       authDomain: "turtleque-d4096.firebaseapp.com",
@@ -45,28 +43,14 @@
     const message = document.getElementById('message');
     const startupSound = document.getElementById('startupSound');
 
-    function playSoundAndThen(callback) {
-      startupSound.currentTime = 0;
-      const playPromise = startupSound.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          // After sound finishes, call callback
-          startupSound.onended = () => {
-            callback();
-          };
-        }).catch(() => {
-          // If can't play sound, just call callback immediately
-          callback();
-        });
-      } else {
-        callback();
-      }
-    }
+    // Helper function to authenticate user after sound
+    function authenticateUser(action) {
+      const email = emailInput.value;
+      const password = passwordInput.value;
 
-    loginBtn.addEventListener('click', () => {
-      playSoundAndThen(() => {
-        const email = emailInput.value;
-        const password = passwordInput.value;
+      message.textContent = '';
+
+      if (action === 'login') {
         auth.signInWithEmailAndPassword(email, password)
           .then(() => {
             window.location.href = "home.html";
@@ -74,13 +58,7 @@
           .catch(err => {
             message.textContent = err.message;
           });
-      });
-    });
-
-    signupBtn.addEventListener('click', () => {
-      playSoundAndThen(() => {
-        const email = emailInput.value;
-        const password = passwordInput.value;
+      } else if (action === 'signup') {
         auth.createUserWithEmailAndPassword(email, password)
           .then(() => {
             window.location.href = "home.html";
@@ -88,6 +66,31 @@
           .catch(err => {
             message.textContent = err.message;
           });
+      }
+    }
+
+    // Play sound then do login
+    loginBtn.addEventListener('click', () => {
+      startupSound.currentTime = 0;
+      startupSound.play().then(() => {
+        startupSound.onended = () => {
+          authenticateUser('login');
+        };
+      }).catch(() => {
+        // If sound fails, just authenticate right away
+        authenticateUser('login');
+      });
+    });
+
+    // Play sound then do signup
+    signupBtn.addEventListener('click', () => {
+      startupSound.currentTime = 0;
+      startupSound.play().then(() => {
+        startupSound.onended = () => {
+          authenticateUser('signup');
+        };
+      }).catch(() => {
+        authenticateUser('signup');
       });
     });
   </script>
