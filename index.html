@@ -8,24 +8,84 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: url("xp-login.jpg") no-repeat center center fixed;
+      background-size: cover;
+      font-family: Tahoma, sans-serif;
+    }
+
+    .login-window {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border: 2px solid #000080;
+      padding: 20px;
+      border-radius: 6px;
+      text-align: center;
+      box-shadow: 0 0 20px #000;
+    }
+
+    .login-window img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+      border: 2px solid #000080;
+    }
+
+    .login-window h2 {
+      margin-bottom: 15px;
+      color: #000080;
+    }
+
+    .login-window input {
+      display: block;
+      width: 90%;
+      margin: 10px auto;
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    .login-window button {
+      padding: 8px 16px;
+      margin: 5px;
+      background-color: #000080;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .login-window button:hover {
+      background-color: #1a5dbf;
+    }
+
+    #message {
+      margin-top: 10px;
+      font-size: 14px;
+      color: red;
+    }
+  </style>
 </head>
 <body>
   <div class="login-window">
-    <h2>Welcome to TurtleQue</h2>
+    <img src="profile-xp.png" alt="Profile Picture" />
+    <h2>Welcome</h2>
     <input type="email" id="email" placeholder="Email" required />
     <input type="password" id="password" placeholder="Password" required />
-    
     <button id="loginBtn">Login</button>
     <button id="signupBtn">Sign Up</button>
-
-    <p id="message" style="color: red;"></p>
+    <p id="message"></p>
   </div>
 
-  <!-- Boot Sound (must be in the same folder as this HTML file) -->
   <audio id="bootSound" src="xp-boot.mp3" preload="auto"></audio>
 
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDbPW4QJXwz4zirD1eNni05Jv9jjvznBoc",
       authDomain: "turtleque-d4096.firebaseapp.com",
@@ -38,44 +98,57 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    const loginBtn = document.getElementById('loginBtn');
-    const signupBtn = document.getElementById('signupBtn');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const message = document.getElementById('message');
     const bootSound = document.getElementById('bootSound');
 
-    // Play boot sound then redirect
-    function playSoundAndRedirect() {
-      bootSound.play().then(() => {
-        setTimeout(() => {
-          window.location.href = "home.html";
-        }, 2500); // delay to let sound play
-      }).catch(() => {
-        // Fallback if sound doesn't autoplay
-        window.location.href = "home.html";
-      });
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+
+    function handleAuth(action) {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      message.textContent = '';
+
+      bootSound.play()
+        .then(() => {
+          setTimeout(() => {
+            if (action === 'login') {
+              auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                  window.location.href = "home.html";
+                })
+                .catch(err => {
+                  message.textContent = err.message;
+                });
+            } else {
+              auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                  window.location.href = "home.html";
+                })
+                .catch(err => {
+                  message.textContent = err.message;
+                });
+            }
+          }, 2200); // wait for sound to finish before auth
+        })
+        .catch(() => {
+          // fallback if browser blocks autoplay
+          if (action === 'login') {
+            auth.signInWithEmailAndPassword(email, password)
+              .then(() => window.location.href = "home.html")
+              .catch(err => message.textContent = err.message);
+          } else {
+            auth.createUserWithEmailAndPassword(email, password)
+              .then(() => window.location.href = "home.html")
+              .catch(err => message.textContent = err.message);
+          }
+        });
     }
 
-    // Login
-    loginBtn.addEventListener('click', () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      message.textContent = '';
-      auth.signInWithEmailAndPassword(email, password)
-        .then(playSoundAndRedirect)
-        .catch(err => message.textContent = err.message);
-    });
-
-    // Sign Up
-    signupBtn.addEventListener('click', () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      message.textContent = '';
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(playSoundAndRedirect)
-        .catch(err => message.textContent = err.message);
-    });
+    loginBtn.addEventListener('click', () => handleAuth('login'));
+    signupBtn.addEventListener('click', () => handleAuth('signup'));
   </script>
 </body>
 </html>
