@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>TurtleQue Desktop</title>
   <link rel="stylesheet" href="style.css" />
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
 <body>
   <div class="desktop">
     <div class="icon blog-icon">
       <a href="#" id="openBlogWindow">
         <img src="icon-blogs.png" alt="Blog Icon" />
-        <!-- no label text as per style.css -->
       </a>
     </div>
 
@@ -25,21 +26,9 @@
       </div>
       <div class="window-content" id="blogContent">
         <div id="blogPosts"></div>
-
         <form id="blogForm">
-          <input
-            type="text"
-            id="blogTitle"
-            placeholder="Title"
-            required
-            style="width: 100%; margin-bottom: 5px;"
-          />
-          <textarea
-            id="blogContentInput"
-            placeholder="Write your post here..."
-            required
-            style="width: 100%; height: 80px;"
-          ></textarea>
+          <input type="text" id="blogTitle" placeholder="Title" required style="width: 100%; margin-bottom: 5px;" />
+          <textarea id="blogContentInput" placeholder="Write your post here..." required style="width: 100%; height: 80px;"></textarea>
           <button type="submit">Post Blog</button>
         </form>
       </div>
@@ -47,7 +36,7 @@
   </div>
 
   <script>
-    // Your Firebase config
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDbPW4QJXwz4zirD1eNni05Jv9jjvznBoc",
       authDomain: "turtleque-d4096.firebaseapp.com",
@@ -57,10 +46,22 @@
       appId: "1:1063279534551:web:12ca5515dae9e447c02b92"
     };
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    // Initialize Firebase safely
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
 
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Redirect if not logged in
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
+
+    // UI Elements
     const blogWindow = document.getElementById('blogWindow');
     const openBtn = document.getElementById('openBlogWindow');
     const closeBtn = document.getElementById('closeBlogWindow');
@@ -106,7 +107,7 @@
       }
     });
 
-    // Load blog posts from Firestore
+    // Load blog posts
     function loadPosts() {
       blogPostsDiv.innerHTML = '<p>Loading blog posts...</p>';
       db.collection('posts')
@@ -135,7 +136,7 @@
         });
     }
 
-    // Submit new blog post
+    // Submit blog post
     blogForm.addEventListener('submit', e => {
       e.preventDefault();
       const title = blogTitleInput.value.trim();
