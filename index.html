@@ -97,7 +97,7 @@
       <input type="password" id="password" placeholder="Enter your password" required />
 
       <div class="login-buttons">
-        <button id="loginBtn">OK</button>
+        <button id="loginBtn">Login</button>
         <button id="signupBtn">Sign Up</button>
       </div>
 
@@ -130,6 +130,7 @@
     function handleAuth(action) {
       const email = emailInput.value;
       const password = passwordInput.value;
+
       sound.play();
 
       setTimeout(() => {
@@ -141,7 +142,7 @@
           .catch(err => {
             message.textContent = err.message;
           });
-      }, 1500); // sound delay
+      }, 1500); // wait for sound
     }
 
     loginBtn.addEventListener('click', () => handleAuth('login'));
