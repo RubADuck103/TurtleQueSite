@@ -1,3 +1,4 @@
+/* Reset and background */
 body, html {
   margin: 0;
   padding: 0;
@@ -12,6 +13,8 @@ body, html {
   height: 100vh;
   background-image: url('xp-wallpaper.jpg');
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -19,6 +22,7 @@ body, html {
   box-sizing: border-box;
 }
 
+/* Icons */
 .icon {
   display: inline-block;
   width: 80px;
@@ -32,58 +36,92 @@ body, html {
   height: 64px;
 }
 
-.blog-icon { width: 160px; margin: 40px; }
-.profile-icon { width: 160px; margin: 40px; }
+.icon span {
+  display: none; /* hide labels on all icons */
+}
 
+/* Blog icon scaled 2x */
+.blog-icon {
+  width: 160px;
+  margin: 40px;
+}
+
+.blog-icon img {
+  width: 128px;
+  height: 128px;
+}
+
+.profile-icon {
+  width: 160px;
+  margin: 40px;
+}
+
+.profile-icon img {
+  width: 128px;
+  height: 128px;
+}
+
+/* Windows XP style window */
 .window {
   position: absolute;
   top: 100px;
   left: 100px;
   width: 600px;
   height: 400px;
-  background: #c0c0c0;
-  border: 2px solid #000080;
-  box-shadow: 1px 1px 0 #fff, 2px 2px 0 #000080;
+  background: #c0c0c0; /* typical light gray XP background */
+  border: 2px solid #000080; /* dark blue border */
+  box-shadow:
+    1px 1px 0 #ffffff,  /* highlight */
+    2px 2px 0 #000080;  /* shadow */
+  z-index: 1000;
   display: flex;
   flex-direction: column;
-  font-family: Tahoma, sans-serif;
+  font-family: "Tahoma", Geneva, Verdana, sans-serif;
   user-select: none;
 }
 
+/* Title bar */
 .window-header {
-  background: linear-gradient(to bottom, #0a246a, #1a5dbf);
+  background: linear-gradient(to bottom, #0a246a, #1a5dbf); /* XP blue gradient */
   color: white;
   padding: 6px 8px;
+  cursor: move;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-weight: bold;
   text-shadow: 0 1px 0 #000080;
-  cursor: move;
   border-bottom: 1px solid #000080;
 }
 
+/* Close button */
 .window-header button {
   background: #c00000;
   border: 1px solid #800000;
   color: white;
   font-weight: bold;
+  cursor: pointer;
   width: 20px;
   height: 20px;
   line-height: 18px;
+  padding: 0;
   text-align: center;
   box-shadow: inset 0 1px 0 #ff7f7f;
   border-radius: 2px;
-  cursor: pointer;
+  user-select: none;
 }
-.window-header button:hover { background: #ff0000; }
 
+.window-header button:hover {
+  background: #ff0000;
+}
+
+/* Content area */
 .window-content {
   background: white;
   padding: 10px;
   overflow-y: auto;
   flex-grow: 1;
-  border-left: 2px solid #808080;
   border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
   box-sizing: border-box;
 }
