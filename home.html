@@ -7,13 +7,21 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 </head>
 <body>
   <div class="desktop">
+    <!-- Blog App Icon -->
     <div class="icon blog-icon">
       <a href="#" id="openBlogWindow">
         <img src="icon-blogs.png" alt="Blog Icon" />
-        <!-- no label text as per style.css -->
+      </a>
+    </div>
+
+    <!-- Profile App Icon -->
+    <div class="icon profile-icon">
+      <a href="#" id="openProfileWindow">
+        <img src="icon-profile.png" alt="Profile Icon" />
       </a>
     </div>
 
@@ -25,29 +33,35 @@
       </div>
       <div class="window-content" id="blogContent">
         <div id="blogPosts"></div>
-
         <form id="blogForm">
-          <input
-            type="text"
-            id="blogTitle"
-            placeholder="Title"
-            required
-            style="width: 100%; margin-bottom: 5px;"
-          />
-          <textarea
-            id="blogContentInput"
-            placeholder="Write your post here..."
-            required
-            style="width: 100%; height: 80px;"
-          ></textarea>
+          <input type="text" id="blogTitle" placeholder="Title" required style="width: 100%; margin-bottom: 5px;" />
+          <textarea id="blogContentInput" placeholder="Write your post here..." required style="width: 100%; height: 80px;"></textarea>
           <button type="submit">Post Blog</button>
         </form>
+      </div>
+    </div>
+
+    <!-- Profile Window -->
+    <div id="profileWindow" class="window" style="display:none;">
+      <div class="window-header">
+        <span>Profile</span>
+        <button id="closeProfileWindow">X</button>
+      </div>
+      <div class="window-content">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img id="profilePic" src="default-pfp.png" width="64" height="64" style="border-radius: 50%; border: 2px solid #000080;" />
+          <div>
+            <h3 id="username">@username</h3>
+            <p id="name">Full Name</p>
+          </div>
+        </div>
+        <p>Followers: <span id="followers">0</span></p>
+        <p>Following: <span id="following">0</span></p>
       </div>
     </div>
   </div>
 
   <script>
-    // Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDbPW4QJXwz4zirD1eNni05Jv9jjvznBoc",
       authDomain: "turtleque-d4096.firebaseapp.com",
@@ -57,56 +71,35 @@
       appId: "1:1063279534551:web:12ca5515dae9e447c02b92"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
+    // Elements
     const blogWindow = document.getElementById('blogWindow');
-    const openBtn = document.getElementById('openBlogWindow');
-    const closeBtn = document.getElementById('closeBlogWindow');
-    const header = blogWindow.querySelector('.window-header');
+    const openBlogBtn = document.getElementById('openBlogWindow');
+    const closeBlogBtn = document.getElementById('closeBlogWindow');
+
+    const profileWindow = document.getElementById('profileWindow');
+    const openProfileBtn = document.getElementById('openProfileWindow');
+    const closeProfileBtn = document.getElementById('closeProfileWindow');
 
     const blogPostsDiv = document.getElementById('blogPosts');
     const blogForm = document.getElementById('blogForm');
     const blogTitleInput = document.getElementById('blogTitle');
     const blogContentInput = document.getElementById('blogContentInput');
 
-    // Open blog window
-    openBtn.addEventListener('click', e => {
+    // Blog logic
+    openBlogBtn.addEventListener('click', e => {
       e.preventDefault();
       blogWindow.style.display = 'flex';
       loadPosts();
     });
 
-    // Close blog window
-    closeBtn.addEventListener('click', () => {
+    closeBlogBtn.addEventListener('click', () => {
       blogWindow.style.display = 'none';
     });
 
-    // Dragging the window
-    let isDragging = false;
-    let offsetX, offsetY;
-
-    header.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      offsetX = e.clientX - blogWindow.offsetLeft;
-      offsetY = e.clientY - blogWindow.offsetTop;
-      document.body.style.userSelect = 'none';
-    });
-
-    window.addEventListener('mouseup', () => {
-      isDragging = false;
-      document.body.style.userSelect = 'auto';
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        blogWindow.style.left = (e.clientX - offsetX) + 'px';
-        blogWindow.style.top = (e.clientY - offsetY) + 'px';
-      }
-    });
-
-    // Load blog posts from Firestore
     function loadPosts() {
       blogPostsDiv.innerHTML = '<p>Loading blog posts...</p>';
       db.collection('posts')
@@ -135,7 +128,6 @@
         });
     }
 
-    // Submit new blog post
     blogForm.addEventListener('submit', e => {
       e.preventDefault();
       const title = blogTitleInput.value.trim();
@@ -157,6 +149,62 @@
           alert('Error adding post: ' + err.message);
         });
     });
+
+    // Profile logic
+    openProfileBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      profileWindow.style.display = "flex";
+      loadUserProfile();
+    });
+
+    closeProfileBtn.addEventListener("click", () => {
+      profileWindow.style.display = "none";
+    });
+
+    function loadUserProfile() {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      document.getElementById("username").textContent = user.email;
+
+      db.collection("users").doc(user.uid).get().then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          document.getElementById("name").textContent = data.name || "Unknown";
+          document.getElementById("followers").textContent = data.followers || 0;
+          document.getElementById("following").textContent = data.following || 0;
+          document.getElementById("profilePic").src = data.profilePicUrl || "default-pfp.png";
+        }
+      });
+    }
+
+    // Make both windows draggable
+    function makeWindowDraggable(windowElement) {
+      const header = windowElement.querySelector(".window-header");
+      let isDragging = false, offsetX = 0, offsetY = 0;
+
+      header.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        offsetX = e.clientX - windowElement.offsetLeft;
+        offsetY = e.clientY - windowElement.offsetTop;
+        document.body.style.userSelect = "none";
+      });
+
+      window.addEventListener("mouseup", () => {
+        isDragging = false;
+        document.body.style.userSelect = "auto";
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          windowElement.style.left = (e.clientX - offsetX) + "px";
+          windowElement.style.top = (e.clientY - offsetY) + "px";
+        }
+      });
+    }
+
+    makeWindowDraggable(blogWindow);
+    makeWindowDraggable(profileWindow);
   </script>
 </body>
 </html>
