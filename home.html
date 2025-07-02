@@ -1,39 +1,150 @@
-<div class="window-content">
-  <img id="profilePic" src="profile-images/default.jpg" width="80" height="80" style="border-radius: 50%; margin-bottom: 10px;" />
-  <div style="margin-bottom: 10px;">
-    <strong>@</strong><span id="username">username</span>
-    <button id="editUsernameBtn">✏️</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TurtleQue Desktop</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <div class="desktop">
+    <div class="icon blog-icon">
+      <a href="#" id="openBlogWindow"><img src="icon-blogs.png" alt="Blog Icon" /></a>
+    </div>
+    <div class="icon profile-icon">
+      <a href="#" id="openProfileWindow"><img src="icon-profile.png" alt="Profile Icon" /></a>
+    </div>
+
+    <!-- Blog Window (unchanged) -->
+    … (your existing blog window markup / script) …
+
+    <!-- Profile Window -->
+    <div id="profileWindow" class="window" style="display:none;">
+      <div class="window-header"><span>Profile</span><button id="closeProfileWindow">X</button></div>
+      <div class="window-content">
+        <img id="profilePic" src="profile-images/default.jpg" alt="Profile Picture" style="width:80px; height:80px; border-radius:50%; margin-bottom:10px;" />
+
+        <div>
+          <strong>@</strong><span id="username">Loading…</span>
+          <button id="editUsernameBtn">✏️</button>
+          <div id="usernameEdit" style="display:none;">
+            <input type="text" id="usernameInput" /><button id="saveUsernameBtn">Save</button>
+          </div>
+        </div>
+
+        <div>
+          <strong>Display Name:</strong> <span id="displayNameText">Loading…</span>
+          <button id="editDisplayNameBtn">✏️</button>
+          <div id="displayNameEdit" style="display:none;">
+            <input type="text" id="displayNameInput" /><button id="saveDisplayNameBtn">Save</button>
+          </div>
+        </div>
+
+        <div>
+          <strong>Bio:</strong>
+          <p id="bioText">Loading…</p>
+          <button id="editBioBtn">✏️</button>
+          <div id="bioEdit" style="display:none;">
+            <textarea id="bioInput" rows="3" style="width:100%;"></textarea>
+            <button id="saveBioBtn">Save</button>
+          </div>
+        </div>
+
+        <p><strong>Followers:</strong> <span id="followers">0</span></p>
+        <p><strong>Following:</strong> <span id="following">0</span></p>
+        <p><strong>Joined:</strong> <span id="joinedDate">—</span></p>
+        <p><strong>Last Active:</strong> <span id="lastActive">—</span></p>
+        <p><strong>User ID:</strong> <span id="userId">—</span></p>
+        <p><strong>Email:</strong> <span id="userEmail">—</span></p>
+        <button id="logoutBtn" style="margin-top:15px; background:#000080;color:white;border:none;padding:6px;cursor:pointer;">Logout</button>
+      </div>
+    </div>
   </div>
 
-  <div id="usernameEdit" style="display: none;">
-    <input type="text" id="usernameInput" />
-    <button id="saveUsernameBtn">Save</button>
-  </div>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyDbPW4QJXwz4zirD1eNni05Jv9jjvznBoc",
+      authDomain: "turtleque-d4096.firebaseapp.com",
+      projectId: "turtleque-d4096"
+    });
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-  <div>
-    <strong>Display Name:</strong> <span id="displayNameText">Loading...</span>
-    <button id="editDisplayNameBtn">✏️</button>
-  </div>
+    const openProfile = document.getElementById('openProfileWindow');
+    const closeProfile = document.getElementById('closeProfileWindow');
+    const profWin = document.getElementById('profileWindow');
 
-  <div id="displayNameEdit" style="display: none;">
-    <input type="text" id="displayNameInput" />
-    <button id="saveDisplayNameBtn">Save</button>
-  </div>
+    const profilePic = document.getElementById('profilePic');
+    const usernameSpan = document.getElementById('username');
+    const displayNameSpan = document.getElementById('displayNameText');
+    const bioText = document.getElementById('bioText');
+    const followersSpan = document.getElementById('followers');
+    const followingSpan = document.getElementById('following');
+    const joinedSpan = document.getElementById('joinedDate');
+    const lastActiveSpan = document.getElementById('lastActive');
+    const userIdSpan = document.getElementById('userId');
+    const userEmailSpan = document.getElementById('userEmail');
 
-  <div>
-    <strong>Bio:</strong>
-    <p id="bioText">Loading...</p>
-    <button id="editBioBtn">✏️</button>
-  </div>
+    openProfile.addEventListener('click', e => {
+      e.preventDefault();
+      profWin.style.display = 'flex';
+      loadUserProfile();
+    });
+    closeProfile.addEventListener('click', () => { profWin.style.display = 'none'; });
 
-  <div id="bioEdit" style="display: none;">
-    <textarea id="bioInput" rows="3" style="width:100%;"></textarea>
-    <button id="saveBioBtn">Save</button>
-  </div>
+    function loadUserProfile() {
+      const user = auth.currentUser;
+      if (!user) return;
+      userEmailSpan.textContent = user.email;
 
-  <p><strong>Followers:</strong> <span id="followers">0</span></p>
-  <p><strong>Following:</strong> <span id="following">0</span></p>
-  <p><strong>Joined:</strong> <span id="joinedDate">Loading...</span></p>
-  <p><strong>Last Active:</strong> <span id="lastActive">Loading...</span></p>
-  <p><strong>User ID:</strong> <span id="userId">Loading...</span></p>
-</div>
+      db.collection('users').doc(user.uid).get()
+        .then(doc => {
+          const data = doc.data();
+          profilePic.src = data.profilePictureUrl || "profile-images/default.jpg";
+          usernameSpan.textContent = data.username;
+          displayNameSpan.textContent = data.displayName || '(none)';
+          bioText.textContent = data.bio || '(no bio)';
+          followersSpan.textContent = data.followers ?? 0;
+          followingSpan.textContent = data.following ?? 0;
+          joinedSpan.textContent = data.joinedDate.toDate().toLocaleDateString();
+          lastActiveSpan.textContent = data.lastActive.toDate().toLocaleString();
+          userIdSpan.textContent = data.userId;
+        });
+    }
+
+    function enableEdit(btn, editDiv, saveBtn, input, field) {
+      btn.addEventListener('click', () => {
+        editDiv.style.display = 'block';
+        input.value = document.getElementById(field).textContent.replace('@', '') || '';
+      });
+      saveBtn.addEventListener('click', () => {
+        const val = input.value.trim();
+        const user = auth.currentUser;
+        if (!user) return;
+        db.collection('users').doc(user.uid).set({ [field]: val }, { merge: true })
+          .then(() => { loadUserProfile(); editDiv.style.display = 'none'; });
+      });
+    }
+
+    enableEdit(document.getElementById('editUsernameBtn'), document.getElementById('usernameEdit'), document.getElementById('saveUsernameBtn'), document.getElementById('usernameInput'), 'username');
+    enableEdit(document.getElementById('editDisplayNameBtn'), document.getElementById('displayNameEdit'), document.getElementById('saveDisplayNameBtn'), document.getElementById('displayNameInput'), 'displayName');
+    enableEdit(document.getElementById('editBioBtn'), document.getElementById('bioEdit'), document.getElementById('saveBioBtn'), document.getElementById('bioInput'), 'bio');
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      auth.signOut().then(() => window.location.href = 'index.html');
+    });
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        db.collection('users').doc(user.uid).update({
+          lastActive: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+  </script>
+</body>
+</html>
