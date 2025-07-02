@@ -51,7 +51,15 @@
         <div style="display: flex; align-items: center; gap: 10px;">
           <img id="profilePic" src="default-pfp.png" width="64" height="64" style="border-radius: 50%; border: 2px solid #000080;" />
           <div>
-            <h3 id="username">@username</h3>
+            <div id="username-container" style="display: flex; align-items: center; gap: 5px;">
+  <h3 id="username" style="margin: 0;">@username</h3>
+  <button id="editUsernameBtn" title="Edit Username" style="background: none; border: none; cursor: pointer;">✏️</button>
+</div>
+<div id="usernameEdit" style="display: none; margin-top: 5px;">
+  <input type="text" id="usernameInput" placeholder="New username" />
+  <button id="saveUsernameBtn">✅</button>
+</div>
+
             <p id="name">Full Name</p>
           </div>
         </div>
