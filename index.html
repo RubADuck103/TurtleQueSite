@@ -8,6 +8,8 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -74,7 +76,7 @@
 </head>
 <body>
   <div class="login-window">
-    <img src="profile-xp.png" alt="Profile Picture" />
+    <img src="profile-images/default.jpg" alt="Profile Picture" />
     <h2>Welcome</h2>
     <input type="email" id="email" placeholder="Email" required />
     <input type="password" id="password" placeholder="Password" required />
@@ -90,13 +92,14 @@
       apiKey: "AIzaSyDbPW4QJXwz4zirD1eNni05Jv9jjvznBoc",
       authDomain: "turtleque-d4096.firebaseapp.com",
       projectId: "turtleque-d4096",
-      storageBucket: "turtleque-d4096.firebasestorage.app",
+      storageBucket: "turtleque-d4096.appspot.com",
       messagingSenderId: "1063279534551",
       appId: "1:1063279534551:web:12ca5515dae9e447c02b92"
     };
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
@@ -111,40 +114,53 @@
       const password = passwordInput.value.trim();
       message.textContent = '';
 
-      bootSound.play()
-        .then(() => {
-          setTimeout(() => {
-            if (action === 'login') {
-              auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                  window.location.href = "home.html";
-                })
-                .catch(err => {
-                  message.textContent = err.message;
-                });
-            } else {
-              auth.createUserWithEmailAndPassword(email, password)
-                .then(() => {
-                  window.location.href = "home.html";
-                })
-                .catch(err => {
-                  message.textContent = err.message;
-                });
-            }
-          }, 2200); // wait for sound to finish before auth
-        })
-        .catch(() => {
-          // fallback if browser blocks autoplay
+      bootSound.play().then(() => {
+        setTimeout(() => {
           if (action === 'login') {
             auth.signInWithEmailAndPassword(email, password)
-              .then(() => window.location.href = "home.html")
+              .then(userCred => {
+                const user = userCred.user;
+                db.collection("users").doc(user.uid).update({
+                  lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                window.location.href = "home.html";
+              })
               .catch(err => message.textContent = err.message);
           } else {
             auth.createUserWithEmailAndPassword(email, password)
-              .then(() => window.location.href = "home.html")
+              .then(async userCred => {
+                const user = userCred.user;
+                const userRef = db.collection("users").doc(user.uid);
+                const counterRef = db.collection("meta").doc("userCounter");
+
+                await db.runTransaction(async (tx) => {
+                  const counterDoc = await tx.get(counterRef);
+                  let nextId = 1;
+                  if (counterDoc.exists) {
+                    nextId = counterDoc.data().count + 1;
+                  }
+                  tx.set(counterRef, { count: nextId });
+                  tx.set(userRef, {
+                    username: email.split('@')[0],
+                    displayName: "",
+                    bio: "",
+                    profilePictureUrl: "default.jpg",
+                    followers: 0,
+                    following: 0,
+                    joinedDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+                    userId: nextId
+                  });
+                });
+
+                window.location.href = "home.html";
+              })
               .catch(err => message.textContent = err.message);
           }
-        });
+        }, 2200);
+      }).catch(() => {
+        message.textContent = "Autoplay blocked. Please interact with the page.";
+      });
     }
 
     loginBtn.addEventListener('click', () => handleAuth('login'));
