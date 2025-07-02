@@ -11,15 +11,15 @@
 </head>
 <body>
   <div class="desktop">
-    <!-- Blog App Icon -->
+    <!-- Blog Icon -->
     <div class="icon blog-icon">
       <a href="#" id="openBlogWindow">
         <img src="icon-blogs.png" alt="Blog Icon" />
       </a>
     </div>
 
-    <!-- Profile App Icon -->
-    <div class="icon profile-icon">
+    <!-- Profile Icon -->
+    <div class="icon blog-icon">
       <a href="#" id="openProfileWindow">
         <img src="icon-profile.png" alt="Profile Icon" />
       </a>
@@ -42,34 +42,28 @@
     </div>
 
     <!-- Profile Window -->
-    <div id="profileWindow" class="window" style="display:none;">
+    <div id="profileWindow" class="window" style="display: none;">
       <div class="window-header">
         <span>Profile</span>
         <button id="closeProfileWindow">X</button>
       </div>
       <div class="window-content">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img id="profilePic" src="default-pfp.png" width="64" height="64" style="border-radius: 50%; border: 2px solid #000080;" />
-          <div>
-            <div id="username-container" style="display: flex; align-items: center; gap: 5px;">
-  <h3 id="username" style="margin: 0;">@username</h3>
-  <button id="editUsernameBtn" title="Edit Username" style="background: none; border: none; cursor: pointer;">✏️</button>
-</div>
-<div id="usernameEdit" style="display: none; margin-top: 5px;">
-  <input type="text" id="usernameInput" placeholder="New username" />
-  <button id="saveUsernameBtn">✅</button>
-</div>
-
-            <p id="name">Full Name</p>
-          </div>
+        <div id="username-container" style="display: flex; align-items: center; gap: 5px;">
+          <h3 id="username" style="margin: 0;">@username</h3>
+          <button id="editUsernameBtn" title="Edit Username" style="background: none; border: none; cursor: pointer;">✏️</button>
         </div>
-        <p>Followers: <span id="followers">0</span></p>
-        <p>Following: <span id="following">0</span></p>
+        <div id="usernameEdit" style="display: none; margin-top: 5px;">
+          <input type="text" id="usernameInput" placeholder="New username" />
+          <button id="saveUsernameBtn">✅</button>
+        </div>
+        <p><strong>Email:</strong> <span id="userEmail">Loading...</span></p>
+        <!-- You can add more user data here -->
       </div>
     </div>
   </div>
 
   <script>
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDbPW4QJXwz4zirD1eNni05Jv9jjvznBoc",
       authDomain: "turtleque-d4096.firebaseapp.com",
@@ -79,11 +73,11 @@
       appId: "1:1063279534551:web:12ca5515dae9e447c02b92"
     };
 
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Elements
     const blogWindow = document.getElementById('blogWindow');
     const openBlogBtn = document.getElementById('openBlogWindow');
     const closeBlogBtn = document.getElementById('closeBlogWindow');
@@ -97,22 +91,53 @@
     const blogTitleInput = document.getElementById('blogTitle');
     const blogContentInput = document.getElementById('blogContentInput');
 
-    // Blog logic
+    // Open/Close Windows
     openBlogBtn.addEventListener('click', e => {
       e.preventDefault();
       blogWindow.style.display = 'flex';
       loadPosts();
     });
+    closeBlogBtn.addEventListener('click', () => blogWindow.style.display = 'none');
 
-    closeBlogBtn.addEventListener('click', () => {
-      blogWindow.style.display = 'none';
+    openProfileBtn.addEventListener('click', e => {
+      e.preventDefault();
+      profileWindow.style.display = 'flex';
+      loadUserProfile();
     });
+    closeProfileBtn.addEventListener('click', () => profileWindow.style.display = 'none');
 
+    // Dragging (shared)
+    function makeDraggable(windowEl, headerEl) {
+      let isDragging = false;
+      let offsetX, offsetY;
+
+      headerEl.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - windowEl.offsetLeft;
+        offsetY = e.clientY - windowEl.offsetTop;
+        document.body.style.userSelect = 'none';
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+        document.body.style.userSelect = 'auto';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          windowEl.style.left = (e.clientX - offsetX) + 'px';
+          windowEl.style.top = (e.clientY - offsetY) + 'px';
+        }
+      });
+    }
+
+    makeDraggable(blogWindow, blogWindow.querySelector('.window-header'));
+    makeDraggable(profileWindow, profileWindow.querySelector('.window-header'));
+
+    // Load Blog Posts
     function loadPosts() {
       blogPostsDiv.innerHTML = '<p>Loading blog posts...</p>';
-      db.collection('posts')
-        .orderBy('createdAt', 'desc')
-        .get()
+      db.collection('posts').orderBy('createdAt', 'desc').get()
         .then(snapshot => {
           blogPostsDiv.innerHTML = '';
           snapshot.forEach(doc => {
@@ -127,7 +152,7 @@
             `;
             blogPostsDiv.appendChild(postElem);
           });
-          if (blogPostsDiv.innerHTML === '') {
+          if (!blogPostsDiv.innerHTML.trim()) {
             blogPostsDiv.innerHTML = '<p>No posts yet.</p>';
           }
         })
@@ -136,83 +161,72 @@
         });
     }
 
+    // Blog Submit
     blogForm.addEventListener('submit', e => {
       e.preventDefault();
       const title = blogTitleInput.value.trim();
       const content = blogContentInput.value.trim();
       if (!title || !content) return;
 
-      db.collection('posts')
-        .add({
-          title,
-          content,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(() => {
-          blogTitleInput.value = '';
-          blogContentInput.value = '';
-          loadPosts();
-        })
-        .catch(err => {
-          alert('Error adding post: ' + err.message);
-        });
+      db.collection('posts').add({
+        title,
+        content,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        blogTitleInput.value = '';
+        blogContentInput.value = '';
+        loadPosts();
+      }).catch(err => alert('Error adding post: ' + err.message));
     });
 
-    // Profile logic
-    openProfileBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      profileWindow.style.display = "flex";
-      loadUserProfile();
-    });
-
-    closeProfileBtn.addEventListener("click", () => {
-      profileWindow.style.display = "none";
-    });
-
+    // Load User Profile
     function loadUserProfile() {
       const user = auth.currentUser;
       if (!user) return;
 
-      document.getElementById("username").textContent = user.email;
+      document.getElementById("userEmail").textContent = user.email;
 
       db.collection("users").doc(user.uid).get().then(doc => {
-        if (doc.exists) {
-          const data = doc.data();
-          document.getElementById("name").textContent = data.name || "Unknown";
-          document.getElementById("followers").textContent = data.followers || 0;
-          document.getElementById("following").textContent = data.following || 0;
-          document.getElementById("profilePic").src = data.profilePicUrl || "default-pfp.png";
-        }
+        const username = doc.exists && doc.data().username
+          ? doc.data().username
+          : user.email.split('@')[0];
+        document.getElementById("username").textContent = "@" + username;
       });
     }
 
-    // Make both windows draggable
-    function makeWindowDraggable(windowElement) {
-      const header = windowElement.querySelector(".window-header");
-      let isDragging = false, offsetX = 0, offsetY = 0;
+    // Edit Username
+    const editBtn = document.getElementById("editUsernameBtn");
+    const usernameDisplay = document.getElementById("username");
+    const usernameEditSection = document.getElementById("usernameEdit");
+    const usernameInput = document.getElementById("usernameInput");
+    const saveUsernameBtn = document.getElementById("saveUsernameBtn");
 
-      header.addEventListener("mousedown", (e) => {
-        isDragging = true;
-        offsetX = e.clientX - windowElement.offsetLeft;
-        offsetY = e.clientY - windowElement.offsetTop;
-        document.body.style.userSelect = "none";
+    editBtn.addEventListener("click", () => {
+      usernameEditSection.style.display = "block";
+      usernameInput.value = usernameDisplay.textContent.replace('@', '');
+    });
+
+    saveUsernameBtn.addEventListener("click", () => {
+      const newUsername = usernameInput.value.trim();
+      if (!newUsername) return alert("Username can't be empty.");
+
+      const user = auth.currentUser;
+      db.collection("users").doc(user.uid).set({
+        username: newUsername
+      }, { merge: true }).then(() => {
+        usernameDisplay.textContent = "@" + newUsername;
+        usernameEditSection.style.display = "none";
+      }).catch(err => {
+        alert("Error updating username: " + err.message);
       });
+    });
 
-      window.addEventListener("mouseup", () => {
-        isDragging = false;
-        document.body.style.userSelect = "auto";
-      });
-
-      window.addEventListener("mousemove", (e) => {
-        if (isDragging) {
-          windowElement.style.left = (e.clientX - offsetX) + "px";
-          windowElement.style.top = (e.clientY - offsetY) + "px";
-        }
-      });
-    }
-
-    makeWindowDraggable(blogWindow);
-    makeWindowDraggable(profileWindow);
+    // Ensure profile loads when auth ready
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        loadUserProfile();
+      }
+    });
   </script>
 </body>
 </html>
