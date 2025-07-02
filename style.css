@@ -51,6 +51,17 @@ body, html {
   height: 128px;
 }
 
+.profile-icon {
+  width: 160px;
+  margin: 40px;
+}
+
+.profile-icon img {
+  width: 128px;
+  height: 128px;
+}
+
+
 /* Windows XP style window */
 .window {
   position: absolute;
